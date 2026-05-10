@@ -1,0 +1,111 @@
+@startuml Diagrama2_MVC
+title Clasele MVC — Modulul Recepție (Controller, Model, View)
+
+skinparam classBackgroundColor #EFF5FF
+skinparam classBorderColor #1F6FEB
+skinparam classHeaderBackgroundColor #1F6FEB
+skinparam classHeaderFontColor #FFFFFF
+skinparam classAttributeFontSize 10
+skinparam classFontSize 11
+skinparam arrowColor #333399
+skinparam packageBackgroundColor #F5F8FF
+skinparam packageBorderColor #1F6FEB
+skinparam defaultFontSize 10
+skinparam linetype ortho
+skinparam noteBackgroundColor #FFFDE7
+skinparam noteBorderColor #C4CEDB
+
+top to bottom direction
+
+' ── CONTROLLER ───────────────────────────────────────────────────────
+package "forms (Controller)" {
+    class ReceptieFormCtrl {
+        - formData : ReceptieFormData
+        {static} FACTURA  : String
+        {static} AVIZ     : String
+        {static} STORNARE : String
+        + documentNou()
+        + selectieFurnizor(f : Furnizor)
+        + adaugaReceptie()
+        + adaugaLinieIntrare()
+        + initiazaStornareDocument(doc : DocInsotitor)
+        + salveazaModificariDocument()
+        - actualizeazaStoc(doc : DocInsotitor)
+        + getFormData() : ReceptieFormData
+    }
+}
+
+' ── MODEL ────────────────────────────────────────────────────────────
+package "forms (Model)" {
+    class ReceptieFormData {
+        - documentCurent : DocInsotitor
+        - receptieSelectata : Receptie
+        - operatieSelectata : String
+        - listaFurnizori : List<Furnizor>
+        - listaGestiuni : List<Gestiune>
+        - listaProduse : List<Produs>
+        - masterRepo : MasterRepository
+        - docRepo : DocumentRepository
+        {static} RECEPTIE_CU_FACTURA : String
+        {static} RECEPTIE_CU_AVIZ : String
+        {static} STORNARE : String
+        + getDocumentCurent() : DocInsotitor
+        + setDocumentCurent(d : DocInsotitor)
+        + getReceptieSelectata() : Receptie
+        + setReceptieSelectata(r : Receptie)
+        + getListaFurnizori() : List<Furnizor>
+        + getListaGestiuni() : List<Gestiune>
+        + getListaProduse() : List<Produs>
+        + setFurnizorSelectat(f : Furnizor)
+        + setOperatieSelectata(op : String)
+        + getMasterRepo() : MasterRepository
+        + getDocRepo() : DocumentRepository
+    }
+}
+
+' ── VIEW ─────────────────────────────────────────────────────────────
+package "forms.view (View)" {
+    class ReceptieFormView {
+        - ctrl : ReceptieFormCtrl
+        - tableModel : LinieIntrareTableModel
+        - cmbTipDocument : JComboBox
+        - cmbFurnizor : JComboBox
+        - cmbGestiune : JComboBox
+        - txtNrDocument : JTextField
+        - txtNrReceptie : JTextField
+        + ReceptieFormView()
+        - populeaza()
+        - nav(directie : int)
+        - adaugRand()
+        - stergRand(row : int)
+        - salveaza()
+        - selecteazaDocumentDeStornat()
+        - esteStornare() : boolean
+        {static} main(args : String[])
+    }
+
+    class LinieIntrareTableModel {
+        + getRowCount() : int
+        + getColumnName(col : int) : String
+        + getValueAt(row : int, col : int) : Object
+        + setValueAt(val : Object, row : int, col : int)
+        + isCellEditable(row : int, col : int) : boolean
+    }
+}
+
+' ── REPOSITORY (stub din Diagrama 1) ────────────────────────────────
+package "repository (vezi Diagrama 1)" {
+    class MasterRepository <<repository>> {
+    }
+    class DocumentRepository <<repository>> {
+    }
+}
+
+' ── RELATII MVC ──────────────────────────────────────────────────────
+ReceptieFormView  -->  ReceptieFormCtrl    : ctrl
+ReceptieFormCtrl  -->  ReceptieFormData    : formData
+ReceptieFormView  +--  LinieIntrareTableModel
+ReceptieFormData  ..>  MasterRepository    : masterRepo\n<<use>>
+ReceptieFormData  ..>  DocumentRepository  : docRepo\n<<use>>
+
+@enduml

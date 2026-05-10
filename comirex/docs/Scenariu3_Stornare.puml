@@ -1,0 +1,40 @@
+@startuml Scenariu3_Stornare
+title Scenariul 3 – Stornare (document original selectat automat)\n(Student 3 – TestScenariul3Stornare)
+
+skinparam sequenceArrowThickness 1.5
+skinparam participantBackgroundColor #EFF5FF
+skinparam participantBorderColor #1F6FEB
+skinparam sequenceLifeLineBorderColor #1F6FEB
+
+actor "Test" as Test
+participant "form : ReceptieFormCtrl" as Ctrl
+participant "formData : ReceptieFormData" as Data
+participant "docRepo : DocumentRepository" as DRepo
+participant "masterRepo : MasterRepository" as MRepo
+
+Test -> Data  : setOperatieSelectata(STORNARE)
+Test -> Ctrl  : documentNou()
+Test -> Data  : getDocumentCurent().getTipDocument()
+Data --> Test : "Stornare"  ✔
+
+Test -> DRepo : findDocInsotitoriAll()
+DRepo --> Test : [FCT-001, AVZ-002, ...]
+
+Test -> Ctrl  : initiazaStornareDocument(docOriginal)
+note right : preia furnizor + gestiune\ncopiaza liniile cu cantitati negate\nutilizatorul NU scrie valori negative
+
+Test -> Ctrl  : salveazaModificariDocument()
+activate Ctrl
+Ctrl -> DRepo : beginTransaction()
+Ctrl -> DRepo : saveDocInsotitor(doc)
+note right : INSERT cantitate = -5.0\n(negativ in BD)
+DRepo --> Ctrl : DocInsotitor (cu ID)
+Ctrl -> MRepo : actualizeazaStoc(doc)
+note right : stocCurent += (-5.0)\n→ stocul scade
+Ctrl -> DRepo : commitTransaction()
+deactivate Ctrl
+
+Test -> Data  : getDocumentCurent().getId()
+Data --> Test : id != null  ✔
+
+@enduml

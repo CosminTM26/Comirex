@@ -1,0 +1,37 @@
+@startuml Scenariu1_ReceptieCuFactura
+title Scenariul 1 – Recepție cu Factură\n(Student 1 – TestScenariul1Factura)
+
+skinparam sequenceArrowThickness 1.5
+skinparam participantBackgroundColor #EFF5FF
+skinparam participantBorderColor #1F6FEB
+skinparam sequenceLifeLineBorderColor #1F6FEB
+
+actor "Test" as Test
+participant "form : ReceptieFormCtrl" as Ctrl
+participant "formData : ReceptieFormData" as Data
+participant "docRepo : DocumentRepository" as DRepo
+participant "masterRepo : MasterRepository" as MRepo
+
+Test -> Data  : setOperatieSelectata(RECEPTIE_CU_FACTURA)
+Test -> Ctrl  : documentNou()
+Test -> Ctrl  : selectieFurnizor(furnizori.get(0))
+Test -> Ctrl  : adaugaReceptie()
+Test -> Ctrl  : adaugaLinieIntrare()
+Test -> Data  : getReceptieSelectata().getLiniiIntrare().get(0)
+Data --> Test : linie
+Test -> Test  : linie.setProdus(...)\nlinie.setCantitate(10.0)
+
+Test -> Ctrl  : salveazaModificariDocument()
+activate Ctrl
+Ctrl -> DRepo : beginTransaction()
+Ctrl -> DRepo : saveDocInsotitor(doc)
+DRepo --> Ctrl : DocInsotitor (cu ID)
+Ctrl -> MRepo : actualizeazaStoc(doc)
+note right : stocCurent += 10.0\n(INSERT stoc nou)
+Ctrl -> DRepo : commitTransaction()
+deactivate Ctrl
+
+Test -> Data  : getDocumentCurent().getId()
+Data --> Test : id != null  ✔
+
+@enduml

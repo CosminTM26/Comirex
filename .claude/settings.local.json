@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"C:\\\\Users\\\\Cosmin\\\\Desktop\\\\Facultate\\\\Anul 3\\\\Sem2\\\\Proiectarea sistemelor informationale\\\\Proiect\")",
+      "PowerShell($f = \"C:\\\\Users\\\\Cosmin\\\\Desktop\\\\Facultate\\\\Anul 3\\\\Sem2\\\\Proiectarea sistemelor informationale\\\\Proiect\\\\comirex\\\\src\\\\main\\\\java\\\\test\\\\TestReceptii.java\"; \\(Get-Item $f\\).Length; Get-Content $f -Encoding Byte -TotalCount 50)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Cosmin\\\\Desktop\\\\Facultate\\\\Anul 3\\\\Sem2\\\\Proiectarea sistemelor informationale\\\\Proiect\\\\comirex\\\\src\\\\main\\\\java\\\\ro\\\\uaic\\\\feaa\\\\psi\\\\comirex\\\\forms\")",
+      "Bash(mvn -q compile)",
+      "PowerShell(Get-Command mvn -ErrorAction SilentlyContinue)",
+      "Bash(ls \"C:\\\\Users\\\\Cosmin\\\\.claude\\\\projects\\\\C--Users-Cosmin-Desktop-Facultate-Anul-3-Sem2-Proiectarea-sistemelor-informationale-Proiect\\\\memory\" 2>/dev/null || echo \"\\(memory empty\\)\")"
+    ]
+  }
+}

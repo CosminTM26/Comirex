@@ -1,0 +1,39 @@
+@startuml Scenariu4_Stergere
+title Scenariul 4 – Răzgândire (ștergere linie din memorie)\n(Student 4 – TestScenariul4Stergere)
+
+skinparam sequenceArrowThickness 1.5
+skinparam participantBackgroundColor #EFF5FF
+skinparam participantBorderColor #1F6FEB
+skinparam sequenceLifeLineBorderColor #1F6FEB
+
+actor "Test" as Test
+participant "form : ReceptieFormCtrl" as Ctrl
+participant "formData : ReceptieFormData" as Data
+participant "docRepo : DocumentRepository" as DRepo
+participant "masterRepo : MasterRepository" as MRepo
+
+Test -> Ctrl  : documentNou()
+Test -> Ctrl  : adaugaReceptie()
+Test -> Ctrl  : adaugaLinieIntrare()
+Test -> Ctrl  : adaugaLinieIntrare()
+
+Test -> Data  : getReceptieSelectata().getLiniiIntrare().get(1)
+Data --> Test : linie2
+Test -> Data  : getReceptieSelectata().removeLinieIntrare(linie2)
+note right : stergere DOAR din memorie\nniciun DELETE in BD
+
+Test -> Data  : getReceptieSelectata().getLiniiIntrare().size()
+Data --> Test : 1  ✔
+
+Test -> Ctrl  : salveazaModificariDocument()
+activate Ctrl
+Ctrl -> DRepo : beginTransaction()
+Ctrl -> DRepo : saveDocInsotitor(doc)
+note right : INSERT doar linie1\nlinie2 nu a ajuns in BD
+DRepo --> Ctrl : DocInsotitor (cu ID)
+Ctrl -> MRepo : actualizeazaStoc(doc)
+note right : UPDATE stoc doar\npentru linie1
+Ctrl -> DRepo : commitTransaction()
+deactivate Ctrl
+
+@enduml

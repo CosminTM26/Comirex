@@ -1,0 +1,40 @@
+@startuml Scenariu2_ReceptieCuAviz
+title Scenariul 2 – Recepție cu Aviz (două linii)\n(Student 2 – TestScenariul2Aviz)
+
+skinparam sequenceArrowThickness 1.5
+skinparam participantBackgroundColor #EFF5FF
+skinparam participantBorderColor #1F6FEB
+skinparam sequenceLifeLineBorderColor #1F6FEB
+
+actor "Test" as Test
+participant "form : ReceptieFormCtrl" as Ctrl
+participant "formData : ReceptieFormData" as Data
+participant "docRepo : DocumentRepository" as DRepo
+participant "masterRepo : MasterRepository" as MRepo
+
+Test -> Data  : setOperatieSelectata(RECEPTIE_CU_AVIZ)
+Test -> Ctrl  : documentNou()
+Test -> Ctrl  : selectieFurnizor(furnizori.get(0))
+Test -> Ctrl  : adaugaReceptie()
+
+Test -> Ctrl  : adaugaLinieIntrare()
+Test -> Ctrl  : adaugaLinieIntrare()
+
+Test -> Data  : getReceptieSelectata().getLiniiIntrare().size()
+Data --> Test : 2  ✔
+
+Test -> Ctrl  : salveazaModificariDocument()
+activate Ctrl
+Ctrl -> DRepo : beginTransaction()
+Ctrl -> DRepo : saveDocInsotitor(doc)
+note right : INSERT doc + receptie\n+ linie1 + linie2 (cascade)
+DRepo --> Ctrl : DocInsotitor (cu ID)
+Ctrl -> MRepo : actualizeazaStoc(doc)
+note right : UPDATE stoc linie1\nUPDATE stoc linie2
+Ctrl -> DRepo : commitTransaction()
+deactivate Ctrl
+
+Test -> Data  : getDocumentCurent().getId()
+Data --> Test : id != null  ✔
+
+@enduml
