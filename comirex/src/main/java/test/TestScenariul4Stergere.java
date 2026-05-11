@@ -2,6 +2,7 @@ package test;
 
 import org.junit.Assert;
 import ro.uaic.feaa.psi.comirex.forms.ReceptieFormCtrl;
+import ro.uaic.feaa.psi.comirex.forms.ReceptieFormData;
 import ro.uaic.feaa.psi.comirex.model.entities.*;
 import ro.uaic.feaa.psi.comirex.model.repository.MasterRepository;
 
@@ -12,6 +13,7 @@ public class TestScenariul4Stergere {
         System.out.println("--- Rulare Scenariul 4: Răzgândire (Ștergere linie înainte de salvare) ---");
 
         ReceptieFormCtrl form = new ReceptieFormCtrl();
+        form.getFormData().setOperatieSelectata(ReceptieFormData.RECEPTIE_CU_FACTURA);
         form.documentNou();
         form.adaugaReceptie();
         form.getFormData().getDocumentCurent().setNumarDocument("DOC-DEL-01");
@@ -29,7 +31,10 @@ public class TestScenariul4Stergere {
                 form.getFormData().getReceptieSelectata().getLiniiIntrare().size());
 
         form.salveazaModificariDocument();
-        System.out.println("  OK - Documentul a fost salvat cu linia ștearsă corect.");
+
+        Assert.assertNotNull("Salvarea a esuat!", form.getFormData().getDocumentCurent().getId());
+        System.out.println("  OK - Documentul a fost salvat cu linia ștearsă corect, ID: "
+                + form.getFormData().getDocumentCurent().getId());
     }
 
     private static void pregatesteDateDeTest() {

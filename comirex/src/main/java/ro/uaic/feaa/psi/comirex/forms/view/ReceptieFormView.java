@@ -277,7 +277,10 @@ public class ReceptieFormView extends JFrame {
 		Receptie r = ctrl.getFormData().getReceptieSelectata();
 
 		if (d != null) {
-			cmbTipDocument.setSelectedItem(d.getTipDocument() != null ? d.getTipDocument() : ReceptieFormCtrl.FACTURA);
+			// "Necunoscut" nu exista in combo — defaultam la Factura
+			String tip = d.getTipDocument();
+			if (tip == null || ReceptieFormCtrl.NECUNOSCUT.equals(tip)) tip = ReceptieFormCtrl.FACTURA;
+			cmbTipDocument.setSelectedItem(tip);
 			txtNrDocument.setText(d.getNumarDocument() != null ? d.getNumarDocument() : "");
 			if (d.getFurnizor() != null) cmbFurnizor.setSelectedItem(d.getFurnizor());
 		}
@@ -385,6 +388,7 @@ public class ReceptieFormView extends JFrame {
 		public boolean isCellEditable(int r, int c) { return c==3||c==4||c==6; }
 
 		public Object getValueAt(int r, int c) {
+			if (ctrl.getFormData().getReceptieSelectata() == null) return "";
 			LinieIntrare l = ctrl.getFormData().getReceptieSelectata().getLiniiIntrare().get(r);
 			Produs p = l.getProdus();
 			double cant = l.getCantitate() != null ? l.getCantitate() : 0.0;
@@ -402,6 +406,7 @@ public class ReceptieFormView extends JFrame {
 		}
 
 		public void setValueAt(Object v, int r, int c) {
+			if (ctrl.getFormData().getReceptieSelectata() == null) return;
 			LinieIntrare l = ctrl.getFormData().getReceptieSelectata().getLiniiIntrare().get(r);
 			if (c == 3) {
 				try { cantCmd.put(l, Double.parseDouble(v.toString().replace(",","."))); } catch(Exception ignored){}

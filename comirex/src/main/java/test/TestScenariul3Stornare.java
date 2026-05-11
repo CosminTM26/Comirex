@@ -1,5 +1,6 @@
 package test;
 
+import java.util.List;
 import org.junit.Assert;
 import ro.uaic.feaa.psi.comirex.forms.ReceptieFormCtrl;
 import ro.uaic.feaa.psi.comirex.forms.ReceptieFormData;
@@ -10,46 +11,49 @@ public class TestScenariul3Stornare {
 
     public static void main(String[] args) {
         pregatesteDateDeTest();
-        System.out.println("--- Rulare Scenariul de Stornare (Anulare/Retur) ---");
+        System.out.println("--- Rulare Scenariul 3: Stornare (document original selectat automat) ---");
 
         ReceptieFormCtrl form = new ReceptieFormCtrl();
-
-        // 1. Setăm operația pe STORNARE și creăm documentul
         form.getFormData().setOperatieSelectata(ReceptieFormData.STORNARE);
         form.documentNou();
 
-        // Verificăm dacă tipul documentului s-a setat corect automat
-        Assert.assertEquals("Tipul documentului trebuie să fie STORNARE",
+        // Verificam ca tipul documentului s-a setat corect automat
+        Assert.assertEquals("Tipul documentului trebuie sa fie STORNARE",
                 ReceptieFormCtrl.STORNARE,
                 form.getFormData().getDocumentCurent().getTipDocument());
 
         form.getFormData().getDocumentCurent().setNumarDocument("STOR-001");
 
-        // 2. Selectăm furnizorul către care facem stornarea
-        form.selectieFurnizor(form.getFormData().getListaFurnizori().get(0));
+        // Incarcam FCT-001 din BD — creata fie de Scenariul 1, fie de pregatesteDateDeTest()
+        List<DocInsotitor> documente = form.getFormData().getDocRepo().findDocInsotitoriAll();
+        DocInsotitor docOriginal = documente.stream()
+                .filter(d -> "FCT-001".equals(d.getNumarDocument()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("FCT-001 nu a fost gasita in BD!"));
 
-        // 3. Adăugăm recepția pe minus (stornarea fizică)
-        form.adaugaReceptie();
-        form.getFormData().getReceptieSelectata().setGestiune(form.getFormData().getListaGestiuni().get(0));
-        form.getFormData().getReceptieSelectata().setCodNIR("NIR-STOR-01");
+        // Initializeaza stornarea — preia automat furnizorul, gestiunea si liniile cu cantitati negate
+        // Utilizatorul NU scrie manual valori negative
+        form.initiazaStornareDocument(docOriginal);
 
-        // 4. Adăugăm produsul stornat (atenție la cantitatea negativă)
-        form.adaugaLinieIntrare();
+        // Verificam ca linia a fost copiata cu cantitate negativa
         LinieIntrare linie = form.getFormData().getReceptieSelectata().getLiniiIntrare().get(0);
-        linie.setProdus(form.getFormData().getListaProduse().get(0));
+        Assert.assertTrue("Cantitatea stornata trebuie sa fie negativa", linie.getCantitate() < 0);
 
-        // La stornare, cantitățile se introduc de obicei cu minus pentru a regla stocul
-        linie.setCantitate(-5.0);
-        linie.setPretAchizitie(50.0);
-
-        // 5. Salvăm documentul de stornare în baza de date
+        // Salvam documentul de stornare in baza de date
         form.salveazaModificariDocument();
 
-        // Validăm că salvarea s-a făcut cu succes prin existența ID-ului
-        Assert.assertNotNull("Salvarea stornării a eșuat!", form.getFormData().getDocumentCurent().getId());
-        System.out.println("  OK - Documentul de Stornare a fost salvat cu succes în BD cu ID: " + form.getFormData().getDocumentCurent().getId());
+        Assert.assertNotNull("Salvarea stornarii a esuat!", form.getFormData().getDocumentCurent().getId());
+        System.out.println("  OK - Documentul de Stornare a fost salvat cu succes in BD cu ID: "
+                + form.getFormData().getDocumentCurent().getId());
     }
 
+    /**
+     * Pregateste datele de test necesare Scenariului 3.
+     *
+     * Testele ruleaza intotdeauna in ordine (1 → 2 → 3 → 4), deci FCT-001
+     * este garantat salvata in BD de catre TestScenariul1Factura.
+     * Aici se asigura doar datele master (furnizori, gestiuni, produse).
+     */
     private static void pregatesteDateDeTest() {
         MasterRepository repo = new MasterRepository();
 
@@ -109,5 +113,6 @@ public class TestScenariul3Stornare {
             repo.addProdus(p3);
             repo.commitTransaction();
         }
+
     }
 }

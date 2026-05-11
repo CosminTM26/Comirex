@@ -27,9 +27,10 @@ public class ReceptieFormCtrl {
 	// Constante pentru tipurile de documente posibile (cum nu avem o lista
 	// dinamica, le tratam drept constante)
 	public static final String NECUNOSCUT = "Necunoscut";
-	public static final String STORNARE = "Stornare";
-	public static final String AVIZ = "Aviz";
-	public static final String FACTURA = "Factura";
+	public static final String AVIZ     = "Aviz";
+	public static final String FACTURA  = "Factura";
+	// Referinta la constanta din FormData — o singura sursa de adevar
+	public static final String STORNARE = ReceptieFormData.STORNARE;
 
 	// Datele formularului sunt pastrate intr-un obiect ReceptieFormData
 	// Atributul nu trebuie sa fie null!
@@ -37,10 +38,6 @@ public class ReceptieFormCtrl {
 
 	public ReceptieFormData getFormData() {
 		return this.formData;
-	}
-
-	public void setFormData(ReceptieFormData formData) {
-		this.formData = formData;
 	}
 
 	/**
@@ -157,17 +154,20 @@ public class ReceptieFormCtrl {
 		// Retinem daca documentul este nou INAINTE de salvare
 		boolean esteDocumentNou = (this.formData.getDocumentCurent().getId() == null);
 
+		// Tranzactia 1: salvare document cu cascade (docRepo — EntityManager propriu)
 		this.formData.getDocRepo().beginTransaction();
 		DocInsotitor doc = this.formData.getDocumentCurent();
 		DocInsotitor salvat = this.formData.getDocRepo().saveDocInsotitor(doc);
 		this.formData.setDocumentCurent(salvat);
-
-		// Actualizam stocul numai la crearea unui document nou
-		if (esteDocumentNou) {
-			actualizeazaStoc(salvat);
-		}
-
 		this.formData.getDocRepo().commitTransaction();
+
+		// Tranzactia 2: actualizare stoc (masterRepo — EntityManager separat)
+		// Executata numai la crearea unui document nou, pentru a evita dubla contabilizare
+		if (esteDocumentNou) {
+			this.formData.getMasterRepo().beginTransaction();
+			actualizeazaStoc(this.formData.getDocumentCurent());
+			this.formData.getMasterRepo().commitTransaction();
+		}
 	}
 
 	/**
@@ -245,9 +245,12 @@ public class ReceptieFormCtrl {
 		adaugaReceptie();
 
 		// Preia gestiunea si liniile din receptiile documentului original
+		// Gestiunea se preia o singura data — din prima receptie cu gestiune nenula
+		boolean gestiuneSetata = false;
 		for (Receptie receptieOriginala : docOriginal.getReceptii()) {
-			if (receptieOriginala.getGestiune() != null) {
+			if (!gestiuneSetata && receptieOriginala.getGestiune() != null) {
 				this.formData.getReceptieSelectata().setGestiune(receptieOriginala.getGestiune());
+				gestiuneSetata = true;
 			}
 			for (LinieIntrare original : receptieOriginala.getLiniiIntrare()) {
 				LinieIntrare linieStor = new LinieIntrare();

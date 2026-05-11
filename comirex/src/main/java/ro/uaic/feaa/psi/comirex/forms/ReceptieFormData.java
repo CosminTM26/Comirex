@@ -1,6 +1,5 @@
 package ro.uaic.feaa.psi.comirex.forms;
 
-import java.util.LinkedList;
 import java.util.List;
 
 import ro.uaic.feaa.psi.comirex.model.entities.DocInsotitor;
@@ -53,18 +52,13 @@ public class ReceptieFormData {
 		return this.listaFurnizori;
 	}
 
-	public void setListaFurnizori(List<Furnizor> listaFurnizori) {
-		this.listaFurnizori = listaFurnizori;
-	}
-
-	public Furnizor getFurnizorSelectat() {
-		if (this.documentCurent == null) {
-			return null;
-		}
-		return this.documentCurent.getFurnizor();
-	}
-
 	public void setFurnizorSelectat(Furnizor furnizorSelectat) {
+		if (furnizorSelectat == null || furnizorSelectat.getId() == null) {
+			return; // selectie invalida — ignoram silentios
+		}
+		if (this.documentCurent == null) {
+			throw new RuntimeException("Nu exista document curent pentru atribuirea furnizorului!");
+		}
 		// Pentru sincronizare cu obiectul atasat documentului curent, se
 		// reincarca obiectul complet din BD (relatia ManyToOne).
 		Furnizor furnizorComplet = this.masterRepo
@@ -74,19 +68,7 @@ public class ReceptieFormData {
 
 	// ---------- ZONA 2 - TIP OPERATIE ----------//
 
-	private List<String> operatiuni;
 	private String operatieSelectata;
-
-	public List<String> getOperatiuni() {
-		if (this.operatiuni == null) {
-			this.operatiuni = new LinkedList<String>();
-			this.operatiuni.add(RECEPTIE_CU_FACTURA);
-			this.operatiuni.add(RECEPTIE_CU_AVIZ);
-			this.operatiuni.add(FACTURA_INTARZIATA);
-			this.operatiuni.add(STORNARE);
-		}
-		return this.operatiuni;
-	}
 
 	public String getOperatieSelectata() {
 		return this.operatieSelectata;
@@ -98,20 +80,6 @@ public class ReceptieFormData {
 
 	// ---------- ZONA 3 - DATE DESPRE DOCUMENT ----------//
 	// Datele documentului curent sunt accesate direct prin documentCurent
-
-	// ---------- ZONA 4 - LINII DOCUMENT (read-only, totalul receptiilor) ----------//
-	// Pentru ca pot fi mai multe receptii pe acelasi document insotitor,
-	// returnam toate liniile cumulate.
-	public List<LinieIntrare> getArticoleReceptionate() {
-		List<LinieIntrare> articole = new LinkedList<LinieIntrare>();
-		if (this.documentCurent == null) {
-			return articole;
-		}
-		for (Receptie r : this.documentCurent.getReceptii()) {
-			articole.addAll(r.getLiniiIntrare());
-		}
-		return articole;
-	}
 
 	// ---------- ZONA 10 - TABELUL DE RECEPTII ----------//
 
@@ -135,10 +103,6 @@ public class ReceptieFormData {
 		return this.listaGestiuni;
 	}
 
-	public void setListaGestiuni(List<Gestiune> listaGestiuni) {
-		this.listaGestiuni = listaGestiuni;
-	}
-
 	// ---------- ZONA 11 - LINII RECEPTIE CURENTA + LISTA DE PRODUSE ----------//
 
 	private List<Produs> listaProduse;
@@ -148,10 +112,6 @@ public class ReceptieFormData {
 			this.listaProduse = this.masterRepo.findProduseAll();
 		}
 		return this.listaProduse;
-	}
-
-	public void setListaProduse(List<Produs> listaProduse) {
-		this.listaProduse = listaProduse;
 	}
 
 	// ---------- GETTERI / SETTERI - ZONA 0 ----------//
@@ -168,23 +128,11 @@ public class ReceptieFormData {
 		return this.listaDocumente;
 	}
 
-	public void setListaDocumente(List<DocInsotitor> listaDocumente) {
-		this.listaDocumente = listaDocumente;
-	}
-
 	public MasterRepository getMasterRepo() {
 		return this.masterRepo;
 	}
 
-	public void setMasterRepo(MasterRepository masterRepo) {
-		this.masterRepo = masterRepo;
-	}
-
 	public DocumentRepository getDocRepo() {
 		return this.docRepo;
-	}
-
-	public void setDocRepo(DocumentRepository docRepo) {
-		this.docRepo = docRepo;
 	}
 }
