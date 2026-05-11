@@ -15,7 +15,7 @@ import ro.uaic.feaa.psi.comirex.model.entities.*;
 import ro.uaic.feaa.psi.comirex.model.repository.MasterRepository;
 
 public class ReceptieFormView extends JFrame {
-	// Paleta de culori - Tematica Luminoasă (Originală)
+	// Paleta de culori
 	private static final Color BG_FRAME = Color.WHITE, BG_PANEL = Color.WHITE, TEXT_PRIMARY = Color.BLACK;
 	private static final Color BORDURA = new Color(220, 224, 229), GRIS_HEADER = new Color(245, 247, 250), GRIS_GRID = new Color(226, 229, 234);
 	private static final Color ALBASTRU = new Color(0, 110, 230), VERDE = new Color(33, 186, 69), ROSU = new Color(219, 40, 40), TOTAL_BG = new Color(230, 240, 255);

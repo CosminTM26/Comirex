@@ -10,10 +10,9 @@ public class TestScenariul2Aviz {
 
     public static void main(String[] args) {
         pregatesteDateDeTest();
-        System.out.println("--- Rulare Scenariul 2: Aviz cu multiple produse (2 linii) ---");
+        System.out.println("--- Rulare Scenariul 2: Aviz cu 2 produse ---");
 
         ReceptieFormCtrl form = new ReceptieFormCtrl();
-
         form.getFormData().setOperatieSelectata(ReceptieFormData.RECEPTIE_CU_AVIZ);
         form.documentNou();
         form.getFormData().getDocumentCurent().setNumarDocument("AVZ-001");
@@ -21,22 +20,24 @@ public class TestScenariul2Aviz {
         form.selectieFurnizor(form.getFormData().getListaFurnizori().get(0));
         form.adaugaReceptie();
 
-        // Adăugăm primul produs
         form.adaugaLinieIntrare();
         form.getFormData().getReceptieSelectata().getLiniiIntrare().get(0)
                 .setProdus(form.getFormData().getListaProduse().get(0));
 
-        // Adăugăm al doilea produs
         form.adaugaLinieIntrare();
         form.getFormData().getReceptieSelectata().getLiniiIntrare().get(1)
                 .setProdus(form.getFormData().getListaProduse().get(1));
 
-        Assert.assertEquals("Trebuie să existe exact 2 linii!", 2,
+        Assert.assertEquals("Trebuie sa existe exact 2 linii!", 2,
                 form.getFormData().getReceptieSelectata().getLiniiIntrare().size());
 
         form.salveazaModificariDocument();
-        System.out.println("  OK - Avizul cu 2 linii a fost salvat în BD cu ID: " + form.getFormData().getDocumentCurent().getId());
+
+        Assert.assertNotNull("Salvarea a esuat!", form.getFormData().getDocumentCurent().getId());
+        System.out.println("  OK - Avizul cu 2 linii salvat cu ID: " + form.getFormData().getDocumentCurent().getId());
     }
+
+    /** Creeaza furnizori, gestiuni si produse daca BD este goala. */
     private static void pregatesteDateDeTest() {
         MasterRepository repo = new MasterRepository();
 

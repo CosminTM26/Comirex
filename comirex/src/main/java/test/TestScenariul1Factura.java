@@ -10,35 +10,30 @@ public class TestScenariul1Factura {
 
     public static void main(String[] args) {
         pregatesteDateDeTest();
-        System.out.println("--- Rulare Scenariul 1: Factură simplă (1 produs) ---");
+        System.out.println("--- Rulare Scenariul 1: Factura simpla (1 produs) ---");
 
         ReceptieFormCtrl form = new ReceptieFormCtrl();
-
-        // 1. Creare document
         form.getFormData().setOperatieSelectata(ReceptieFormData.RECEPTIE_CU_FACTURA);
         form.documentNou();
         form.getFormData().getDocumentCurent().setNumarDocument("FCT-001");
 
-        // 2. Selectie furnizor
         form.selectieFurnizor(form.getFormData().getListaFurnizori().get(0));
 
-        // 3. Adaugare receptie
         form.adaugaReceptie();
         form.getFormData().getReceptieSelectata().setGestiune(form.getFormData().getListaGestiuni().get(0));
 
-        // 4. Adaugare produs
         form.adaugaLinieIntrare();
         LinieIntrare linie = form.getFormData().getReceptieSelectata().getLiniiIntrare().get(0);
         linie.setProdus(form.getFormData().getListaProduse().get(0));
         linie.setCantitate(10.0);
 
-        // 5. Salvare
         form.salveazaModificariDocument();
 
-        Assert.assertNotNull("Salvarea a eșuat!", form.getFormData().getDocumentCurent().getId());
-        System.out.println("  OK - Factura a fost salvată cu succes în baza de date cu ID: " + form.getFormData().getDocumentCurent().getId());
+        Assert.assertNotNull("Salvarea a esuat!", form.getFormData().getDocumentCurent().getId());
+        System.out.println("  OK - Factura salvata cu ID: " + form.getFormData().getDocumentCurent().getId());
     }
 
+    /** Creeaza furnizori, gestiuni si produse daca BD este goala. */
     private static void pregatesteDateDeTest() {
         MasterRepository repo = new MasterRepository();
 

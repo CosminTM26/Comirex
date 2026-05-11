@@ -10,7 +10,7 @@ public class TestScenariul4Stergere {
 
     public static void main(String[] args) {
         pregatesteDateDeTest();
-        System.out.println("--- Rulare Scenariul 4: Răzgândire (Ștergere linie înainte de salvare) ---");
+        System.out.println("--- Rulare Scenariul 4: Stergere linie din memorie inainte de salvare ---");
 
         ReceptieFormCtrl form = new ReceptieFormCtrl();
         form.getFormData().setOperatieSelectata(ReceptieFormData.RECEPTIE_CU_FACTURA);
@@ -18,25 +18,23 @@ public class TestScenariul4Stergere {
         form.adaugaReceptie();
         form.getFormData().getDocumentCurent().setNumarDocument("DOC-DEL-01");
 
-        // Adăugăm 2 produse în memorie
         form.adaugaLinieIntrare();
         form.adaugaLinieIntrare();
 
-        // Ștergem al doilea produs din memorie
         LinieIntrare liniaDeSters = form.getFormData().getReceptieSelectata().getLiniiIntrare().get(1);
         form.getFormData().getReceptieSelectata().removeLinieIntrare(liniaDeSters);
 
-        // Verificăm dacă a rămas doar o singură linie înainte de a salva
-        Assert.assertEquals("Ștergerea din memorie nu a funcționat!", 1,
+        Assert.assertEquals("Stergerea din memorie nu a functionat!", 1,
                 form.getFormData().getReceptieSelectata().getLiniiIntrare().size());
 
         form.salveazaModificariDocument();
 
         Assert.assertNotNull("Salvarea a esuat!", form.getFormData().getDocumentCurent().getId());
-        System.out.println("  OK - Documentul a fost salvat cu linia ștearsă corect, ID: "
+        System.out.println("  OK - Document salvat cu linia stearsa corect, ID: "
                 + form.getFormData().getDocumentCurent().getId());
     }
 
+    /** Creeaza furnizori, gestiuni si produse daca BD este goala. */
     private static void pregatesteDateDeTest() {
         MasterRepository repo = new MasterRepository();
 

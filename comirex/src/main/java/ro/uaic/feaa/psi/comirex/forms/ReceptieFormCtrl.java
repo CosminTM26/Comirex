@@ -12,28 +12,14 @@ import ro.uaic.feaa.psi.comirex.model.entities.Receptie;
 import ro.uaic.feaa.psi.comirex.model.entities.Stoc;
 import ro.uaic.feaa.psi.comirex.model.repository.MasterRepository;
 
-/**
- * Controllerul (in sensul MVC) pentru formularul "Receptie - Document
- * insotitor".
- *
- * Furnizeaza metodele necesare pentru implementarea comportamentului
- * formularului ca raspuns la actiunile utilizatorului (apasarea butoanelor,
- * selectia unui element din liste etc). Acceseaza datele introduse de
- * utilizator pe forma grafica prin compunere, prin intermediul atributului
- * formData.
- */
+/** Controller MVC pentru formularul "Receptie - Document insotitor". */
 public class ReceptieFormCtrl {
 
-	// Constante pentru tipurile de documente posibile (cum nu avem o lista
-	// dinamica, le tratam drept constante)
 	public static final String NECUNOSCUT = "Necunoscut";
-	public static final String AVIZ     = "Aviz";
-	public static final String FACTURA  = "Factura";
-	// Referinta la constanta din FormData — o singura sursa de adevar
-	public static final String STORNARE = ReceptieFormData.STORNARE;
+	public static final String AVIZ       = "Aviz";
+	public static final String FACTURA    = "Factura";
+	public static final String STORNARE   = ReceptieFormData.STORNARE;
 
-	// Datele formularului sunt pastrate intr-un obiect ReceptieFormData
-	// Atributul nu trebuie sa fie null!
 	private ReceptieFormData formData = new ReceptieFormData();
 
 	public ReceptieFormData getFormData() {
@@ -41,17 +27,13 @@ public class ReceptieFormCtrl {
 	}
 
 	/**
-	 * Implementeaza comportamentul pentru butonul "Document nou".
-	 *
-	 * ATENTIE: aceasta operatie nu presupune salvarea obiectului in baza de
-	 * date, ci doar pregatirea unui obiect nou de tip DocInsotitor care va
-	 * prelua ulterior datele introduse de utilizator in formular.
+	 * Pregateste un DocInsotitor nou in memorie (fara salvare in BD).
+	 * Tipul documentului se deduce din operatia selectata.
 	 */
 	public void documentNou() {
 		DocInsotitor doc = new DocInsotitor();
 		this.formData.setDocumentCurent(doc);
 
-		// Setare tip document pe baza operatiei selectate
 		String operatie = this.formData.getOperatieSelectata();
 		if (RECEPTIE_CU_FACTURA_OP.equals(operatie)) {
 			doc.setTipDocument(FACTURA);
@@ -60,24 +42,21 @@ public class ReceptieFormCtrl {
 		} else if (STORNARE_OP.equals(operatie)) {
 			doc.setTipDocument(STORNARE);
 		} else {
-			// Default - intotdeauna trebuie sa existe si un default absolut
 			doc.setTipDocument(NECUNOSCUT);
 		}
 
 		doc.setDataDocument(new Date());
 		doc.setDataOperare(new Date());
 
-		// Daca avem deja furnizori incarcati, atasam primul ca default
 		if (!this.formData.getListaFurnizori().isEmpty()) {
 			doc.setFurnizor(this.formData.getListaFurnizori().get(0));
 		}
 
-		// Resetam si receptia selectata - documentul nou nu are inca receptii
 		this.formData.setReceptieSelectata(null);
 	}
 
 	/**
-	 * Implementeaza comportamentul pentru selectia unui furnizor din combo-box.
+	 * Atribuie furnizorul selectat documentului curent.
 	 *
 	 * @param furnizor furnizorul selectat de utilizator
 	 */
@@ -88,10 +67,7 @@ public class ReceptieFormCtrl {
 		this.formData.setFurnizorSelectat(furnizor);
 	}
 
-	/**
-	 * Implementeaza comportamentul pentru butonul "Adauga receptie" din tab-ul
-	 * Receptii. Genereaza o noua receptie pentru documentul curent.
-	 */
+	/** Adauga o receptie noua documentului curent si o seteaza ca selectata. */
 	public void adaugaReceptie() {
 		if (this.formData.getDocumentCurent() == null) {
 			throw new RuntimeException("Selectati sau creati mai intai un document!");
@@ -99,8 +75,6 @@ public class ReceptieFormCtrl {
 		Receptie r = new Receptie();
 		r.setDataReceptie(new Date());
 
-		// Implicit, prima gestiune din lista (utilizatorul poate schimba
-		// ulterior prin obiectele grafice)
 		if (!this.formData.getListaGestiuni().isEmpty()) {
 			r.setGestiune(this.formData.getListaGestiuni().get(0));
 		}
@@ -109,13 +83,7 @@ public class ReceptieFormCtrl {
 		this.formData.setReceptieSelectata(r);
 	}
 
-	/**
-	 * Implementeaza comportamentul pentru butonul "Adauga linie" din grid-ul de
-	 * linii intrare. Genereaza o noua linie pentru receptia curent selectata.
-	 *
-	 * Cantitatile recepționate sunt editabile, iar diferentele fata de
-	 * cantitatea comandata se vor calcula prin obiectele grafice (binding).
-	 */
+	/** Adauga o linie de intrare goala receptiei curente. */
 	public void adaugaLinieIntrare() {
 		if (this.formData.getReceptieSelectata() == null) {
 			throw new RuntimeException("Selectati mai intai o receptie!");
@@ -126,7 +94,6 @@ public class ReceptieFormCtrl {
 		linie.setPretVanzare(0.0);
 		linie.setAdaos(0.0);
 
-		// Implicit, primul produs din lista (utilizatorul va modifica)
 		if (!this.formData.getListaProduse().isEmpty()) {
 			linie.setProdus(this.formData.getListaProduse().get(0));
 		}
@@ -135,23 +102,15 @@ public class ReceptieFormCtrl {
 	}
 
 	/**
-	 * Comite modificarile din formular in baza de date si actualizeaza stocul.
-	 *
-	 * Fluxuri suportate:
-	 *   - Receptie cu Factura / Aviz : cantitate pozitiva → creste stocCurent
-	 *   - Stornare                   : cantitate negativa → scade stocCurent
-	 *   - Stergere linie din memorie : linia nu exista la salvare → stocul neafectat
-	 *
-	 * Actualizarea stocului se face DOAR pentru documente noi (id == null inainte
-	 * de salvare). Documentele deja salvate (incarcate prin navigare) nu
-	 * retrigeraza actualizarea stocului, evitandu-se dubla contabilizare.
+	 * Salveaza documentul curent in BD si actualizeaza stocul.
+	 * Stocul se actualizeaza doar la prima salvare (document nou), nu la
+	 * re-deschiderea unui document existent.
 	 */
 	public void salveazaModificariDocument() {
 		if (this.formData.getDocumentCurent() == null) {
 			throw new RuntimeException("Nu exista nici un document de salvat!");
 		}
 
-		// Retinem daca documentul este nou INAINTE de salvare
 		boolean esteDocumentNou = (this.formData.getDocumentCurent().getId() == null);
 
 		// Tranzactia 1: salvare document cu cascade (docRepo — EntityManager propriu)
@@ -162,7 +121,6 @@ public class ReceptieFormCtrl {
 		this.formData.getDocRepo().commitTransaction();
 
 		// Tranzactia 2: actualizare stoc (masterRepo — EntityManager separat)
-		// Executata numai la crearea unui document nou, pentru a evita dubla contabilizare
 		if (esteDocumentNou) {
 			this.formData.getMasterRepo().beginTransaction();
 			actualizeazaStoc(this.formData.getDocumentCurent());
@@ -171,41 +129,28 @@ public class ReceptieFormCtrl {
 	}
 
 	/**
-	 * Actualizeaza stocul curent (tabela stoc) pentru fiecare linie de intrare
-	 * din documentul salvat.
-	 *
-	 * Logica per linie:
-	 *   - Cauta inregistrarea Stoc pentru perechea (produs, gestiune).
-	 *   - Daca exista: stocCurent += cantitate (pozitiv sau negativ).
-	 *   - Daca nu exista: creeaza o inregistrare noua cu stocCurent = cantitate.
-	 *
-	 * Liniile cu produs null, gestiune null sau cantitate 0 sunt sarite silentios.
+	 * Actualizeaza tabela Stoc pentru fiecare linie din document.
+	 * Daca stocul nu exista il creeaza; altfel aduna cantitatea (negativa pentru Stornare).
+	 * Liniile fara produs, gestiune sau cu cantitate 0 sunt sarite.
 	 */
 	private void actualizeazaStoc(DocInsotitor doc) {
 		MasterRepository masterRepo = this.formData.getMasterRepo();
 
 		for (Receptie receptie : doc.getReceptii()) {
 			Gestiune gestiune = receptie.getGestiune();
-			if (gestiune == null || gestiune.getId() == null) {
-				continue; // receptie fara gestiune alocata - sarim
-			}
+			if (gestiune == null || gestiune.getId() == null) continue;
 
 			for (LinieIntrare linie : receptie.getLiniiIntrare()) {
 				Produs produs = linie.getProdus();
-				if (produs == null || produs.getId() == null) {
-					continue; // linie fara produs - sarim
-				}
+				if (produs == null || produs.getId() == null) continue;
 
 				Double cantitate = linie.getCantitate();
-				if (cantitate == null || cantitate == 0.0) {
-					continue; // cantitate zero nu modifica stocul
-				}
+				if (cantitate == null || cantitate == 0.0) continue;
 
 				List<Stoc> stocuri = masterRepo.findStocByProdusGestiune(
 						produs.getId(), gestiune.getId());
 
 				if (stocuri.isEmpty()) {
-					// Prima intrare pentru acest produs in aceasta gestiune
 					Stoc stocNou = new Stoc();
 					stocNou.setProdus(produs);
 					stocNou.setGestiune(gestiune);
@@ -214,7 +159,6 @@ public class ReceptieFormCtrl {
 					stocNou.setStocInitialAn(0.0);
 					masterRepo.addStoc(stocNou);
 				} else {
-					// Stoc existent → adunam cantitatea (negativa pentru Stornare)
 					Stoc stoc = stocuri.get(0);
 					stoc.setStocCurent(stoc.getStocCurent() + cantitate);
 					masterRepo.updateStoc(stoc);
@@ -225,13 +169,7 @@ public class ReceptieFormCtrl {
 
 	/**
 	 * Initializeaza documentul curent ca stornare a unui document original.
-	 * Se apeleaza dupa documentNou() — documentul curent trebuie sa existe.
-	 *
-	 * Copiaza automat toate liniile din documentul original cu cantitatile negate
-	 * (pozitiv → negativ), preia furnizorul si gestiunea, si seteaza referinta
-	 * catre documentul original (docInsotitorReferinta).
-	 *
-	 * Utilizatorul nu trebuie sa introduca manual cantitati negative.
+	 * Copiaza automat liniile cu cantitati negate; utilizatorul nu scrie valori negative.
 	 *
 	 * @param docOriginal documentul (Factura / Aviz) care se storneaza
 	 */
@@ -241,11 +179,8 @@ public class ReceptieFormCtrl {
 		stornat.setFurnizor(docOriginal.getFurnizor());
 		stornat.setDocInsotitorReferinta(docOriginal);
 
-		// Creeaza receptia de stornare
 		adaugaReceptie();
 
-		// Preia gestiunea si liniile din receptiile documentului original
-		// Gestiunea se preia o singura data — din prima receptie cu gestiune nenula
 		boolean gestiuneSetata = false;
 		for (Receptie receptieOriginala : docOriginal.getReceptii()) {
 			if (!gestiuneSetata && receptieOriginala.getGestiune() != null) {
@@ -255,7 +190,6 @@ public class ReceptieFormCtrl {
 			for (LinieIntrare original : receptieOriginala.getLiniiIntrare()) {
 				LinieIntrare linieStor = new LinieIntrare();
 				linieStor.setProdus(original.getProdus());
-				// Cantitatea devine intotdeauna negativa — stornare cantitativa
 				double cantOrig = original.getCantitate() != null ? original.getCantitate() : 0.0;
 				linieStor.setCantitate(-Math.abs(cantOrig));
 				linieStor.setPretAchizitie(original.getPretAchizitie());
@@ -266,8 +200,7 @@ public class ReceptieFormCtrl {
 		}
 	}
 
-	// ---------- Constante interne (legate de operatiile din FormData) ----------//
 	private static final String RECEPTIE_CU_FACTURA_OP = ReceptieFormData.RECEPTIE_CU_FACTURA;
-	private static final String RECEPTIE_CU_AVIZ_OP = ReceptieFormData.RECEPTIE_CU_AVIZ;
-	private static final String STORNARE_OP = ReceptieFormData.STORNARE;
+	private static final String RECEPTIE_CU_AVIZ_OP    = ReceptieFormData.RECEPTIE_CU_AVIZ;
+	private static final String STORNARE_OP            = ReceptieFormData.STORNARE;
 }

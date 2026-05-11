@@ -11,48 +11,38 @@ public class TestScenariul3Stornare {
 
     public static void main(String[] args) {
         pregatesteDateDeTest();
-        System.out.println("--- Rulare Scenariul 3: Stornare (document original selectat automat) ---");
+        System.out.println("--- Rulare Scenariul 3: Stornare FCT-001 ---");
 
         ReceptieFormCtrl form = new ReceptieFormCtrl();
         form.getFormData().setOperatieSelectata(ReceptieFormData.STORNARE);
         form.documentNou();
 
-        // Verificam ca tipul documentului s-a setat corect automat
         Assert.assertEquals("Tipul documentului trebuie sa fie STORNARE",
                 ReceptieFormCtrl.STORNARE,
                 form.getFormData().getDocumentCurent().getTipDocument());
 
         form.getFormData().getDocumentCurent().setNumarDocument("STOR-001");
 
-        // Incarcam FCT-001 din BD — creata fie de Scenariul 1, fie de pregatesteDateDeTest()
         List<DocInsotitor> documente = form.getFormData().getDocRepo().findDocInsotitoriAll();
         DocInsotitor docOriginal = documente.stream()
                 .filter(d -> "FCT-001".equals(d.getNumarDocument()))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("FCT-001 nu a fost gasita in BD!"));
 
-        // Initializeaza stornarea — preia automat furnizorul, gestiunea si liniile cu cantitati negate
-        // Utilizatorul NU scrie manual valori negative
         form.initiazaStornareDocument(docOriginal);
 
-        // Verificam ca linia a fost copiata cu cantitate negativa
         LinieIntrare linie = form.getFormData().getReceptieSelectata().getLiniiIntrare().get(0);
         Assert.assertTrue("Cantitatea stornata trebuie sa fie negativa", linie.getCantitate() < 0);
 
-        // Salvam documentul de stornare in baza de date
         form.salveazaModificariDocument();
 
         Assert.assertNotNull("Salvarea stornarii a esuat!", form.getFormData().getDocumentCurent().getId());
-        System.out.println("  OK - Documentul de Stornare a fost salvat cu succes in BD cu ID: "
-                + form.getFormData().getDocumentCurent().getId());
+        System.out.println("  OK - Stornare salvata cu ID: " + form.getFormData().getDocumentCurent().getId());
     }
 
     /**
-     * Pregateste datele de test necesare Scenariului 3.
-     *
-     * Testele ruleaza intotdeauna in ordine (1 → 2 → 3 → 4), deci FCT-001
-     * este garantat salvata in BD de catre TestScenariul1Factura.
-     * Aici se asigura doar datele master (furnizori, gestiuni, produse).
+     * Creeaza furnizori, gestiuni si produse daca BD este goala.
+     * FCT-001 este garantat prezenta — creata de TestScenariul1Factura.
      */
     private static void pregatesteDateDeTest() {
         MasterRepository repo = new MasterRepository();
@@ -113,6 +103,5 @@ public class TestScenariul3Stornare {
             repo.addProdus(p3);
             repo.commitTransaction();
         }
-
     }
 }
